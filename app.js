@@ -1,0 +1,144 @@
+const el = id => document.getElementById(id);
+const app = window.Telegram?.WebApp;
+app?.ready(); app?.expand();
+const data = await fetch('./catalog.json').then(r => r.json());
+const products = data.products.slice(0,20);
+const price = p => '€'+Number(p.euros).toFixed(2);
+let index=0, frame=0, muted=false;
+const viewer=el('viewer'), media=el('media');
+el('count').textContent=products.length;
+products.forEach((p,i)=>{
+  const card=document.createElement('article');
+  card.innerHTML='<button><div class="cover"><img alt=""><span><label></label><b></b></span></div><strong></strong></button>';
+  card.querySelector('img').src=p.poster;
+  card.querySelector('label').textContent=p.grams+' g';
+  card.querySelector('b').textContent=price(p);
+  card.querySelector('strong').textContent=p.name;
+  card.querySelector('button').onclick=()=>{index=i;frame=0;viewer.showModal();render();app?.disableVerticalSwipes?.()};
+  el('grid').append(card);
+});
+el('mode').onclick=e=>{
+  const single=el('grid').classList.toggle('single');
+  e.currentTarget.textContent=single?'⊞':'▣';
+  e.currentTarget.ariaLabel=single?'Switch to grid':'Switch to carousel';
+};
+function render(){
+  const p=products[index];
+  const video=Boolean(p.video && frame===0);
+  const current=document.createElement(video?'video':'img');
+  media.replaceChildren(current);
+  el('sound').hidden=!video;
+  if(video){
+    current.playsInline=true;current.loop=true;current.muted=muted;current.poster=p.poster;current.src=p.video;
+    current.play().catch(()=>{current.muted=true;el('sound').textContent='Enable sound';current.play().catch(()=>{current.controls=true})});
+    el('sound').textContent=muted?'Enable sound':'Mute';
+    el('sound').onclick=()=>{muted=!current.muted;current.muted=muted;current.play().catch(()=>{current.controls=true});el('sound').textContent=muted?'Enable sound':'Mute'};
+  }else{current.src=p.photos?.[Math.max(0,frame-1)]||p.poster;current.alt=p.name}
+  el('gallery').hidden=!p.photos?.length||(!p.video&&p.photos.length<2);
+  el('gallery').textContent=frame===p.photos?.length&&p.video?'Video':'Photos →';
+  el('name').textContent=p.name;el('desc').textContent=p.description;
+  el('details').textContent=p.grams+' g   ·   '+price(p);
+}
+el('gallery').onclick=()=>{const p=products[index];frame=frame>=p.photos.length?(p.video?0:1):(!p.video&&!frame?2:frame+1);render()};
+function move(step){index=visible[(visible.indexOf(index)+step+visible.length)%visible.length];frame=0;render()}
+el('next').onclick=()=>move(1);
+let start;
+viewer.addEventListener('touchstart',e=>start=e.touches[0].clientY,{passive:true});
+viewer.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-start;if(Math.abs(dy)>55)move(dy<0?1:-1)});
+el('closeView').onclick=()=>viewer.close();
+viewer.onclose=()=>{media.replaceChildren();app?.enableVerticalSwipes?.()};
+for(const [id,url] of [['tg',data.telegram],['sg',data.signal]]){
+ const link=el(id);
+ if(!url){link.hidden=true;link.style.display='none';continue}
+ link.href=url;link.target='_blank';link.rel='noopener';
+ link.onclick=e=>{if(!app?.initData)return;e.preventDefault();if(id==='tg')app.openTelegramLink(url);else app.openLink(url)};
+}
+
+const cards=[...el('grid').children];
+let selected='';
+let visible=[];
+const categories=data.categories||[];
+function filter(category){
+  selected=category;
+  const featured = data.featured ?? products.slice(0,4).map(p=>p.id);
+  const picks = [...new Set(featured)].slice(0,4);
+  visible = selected ? products.map((p,i)=>p.category===selected?i:-1).filter(i=>i>=0)
+    : (data.featured ? picks.map(id=>products.findIndex(p=>p.id===id)).filter(i=>i>=0) : products.slice(0,4).map((_,i)=>i));
+  cards.forEach((card,i)=>card.hidden=!visible.includes(i));
+  visible.forEach(i=>el('grid').append(cards[i]));
+  el('sectionTitle').textContent=selected||'Featured';
+  el('count').textContent=visible.length;
+  for(const button of el('categories').children) button.setAttribute('aria-pressed',String(button.textContent===selected));
+}
+for(const category of categories){
+  const button=document.createElement('button');
+  button.textContent=category;
+  const cover=data.categoryImages?.[category];
+  if(cover) button.style.backgroundImage='linear-gradient(0deg,#000c,transparent),url('+JSON.stringify(cover)+')';
+  button.onclick=()=>filter(selected===category?'':category);
+  el('categories').append(button);
+}
+if(data.banner) el('hero').style.backgroundImage='linear-gradient(90deg,#000a,transparent),url('+JSON.stringify(data.banner)+')';
+if(data.avatar){el('avatar').src=data.avatar;el('avatar').hidden=false}
+function addContact(panel, label, url, service) {
+  const link = document.createElement(url ? 'a' : 'button');
+  link.className = 'contact-card ' + service;
+  const icon = service === 'signal'
+    ? '<path d="M19 17a8 8 0 1 0-12 1l-2 4 5-2a8 8 0 0 0 9-3Z" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="2 1"/><circle cx="12" cy="11.5" r="5.5" fill="white"/>'
+    : '<path fill="white" d="M2 11.5 21 4l-3.2 16-6.3-4.7 5.8-7.1-8 6-4.9-1.6Z"/>';
+  link.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24">' + icon + '</svg>';
+  link.append(document.createTextNode(label));
+  if (url) {
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.onclick = event => {
+      if (!app?.initData) return;
+      event.preventDefault();
+      if (service === 'telegram') app.openTelegramLink(url);
+      else app.openLink(url);
+    };
+  } else {
+    link.disabled = true;
+    const status = document.createElement('small');
+    status.textContent = 'Coming soon';
+    link.append(status);
+  }
+  panel.append(link);
+}
+
+function switchTab(tab){
+  const menu=tab==='Menu', panel=el('panel');
+  for(const id of ['grid','categories','mode','count','sectionTitle']) el(id).hidden=!menu;
+  panel.hidden=menu;panel.replaceChildren();
+  for(const b of document.querySelectorAll('nav button')) b.setAttribute('aria-current',String(b.dataset.tab===tab));
+  if(menu){filter('');return}
+  const title=document.createElement('h2');title.textContent=tab;panel.append(title);
+  if(tab==='Messages'){
+    addContact(panel, 'Main Telegram Channel', data.telegramChannel, 'telegram');
+    addContact(panel, 'Telegram Contact', data.telegram, 'telegram');
+    addContact(panel, 'Signal Contact', data.signal, 'signal');
+    return;
+  }
+  const reviews=document.createElement('section');
+  addContact(panel,'Write a review',data.reviewBot,'telegram');
+  panel.append(reviews);
+  reviews.textContent='Loading reviews…';
+  fetch('./api/reviews',{cache:'no-store'}).then(async response=>{
+    if(!response.ok) throw Error();
+    const entries=await response.json();
+    if(!Array.isArray(entries)) throw Error();
+    reviews.replaceChildren();
+    for(const entry of [...entries,...(data.reviews||[])]){
+      const card=document.createElement('blockquote');
+      const header=document.createElement('b');
+      header.textContent=[entry.rating?'★'.repeat(entry.rating):'',entry.author||'Anonymous',(entry.created||'').slice(0,10)].filter(Boolean).join(' · ');
+      const body=document.createElement('p');
+      body.textContent=entry.body||entry.text;
+      card.append(header,body);reviews.append(card);
+    }
+    if(!reviews.children.length) reviews.textContent='No reviews yet.';
+  }).catch(()=>reviews.textContent='Reviews are temporarily unavailable.');
+}
+for(const b of document.querySelectorAll('nav button')) b.onclick=()=>switchTab(b.dataset.tab);
+switchTab('Menu');

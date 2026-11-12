@@ -1,0 +1,81 @@
+{
+  "telegramChannel": "https://t.me/+7QUt5JvPPbIxMTNk",
+  "telegram": "https://t.me/rosanerapack",
+  "signal": "https://signal.me/#eu/9E9Ym5HK8r_p0-5-JnEi1anDD7KfuzadJnr5Ac8kkhr1sAKeOklN9r5jUW75RdWQ",
+  "products": [
+    {
+      "name": "Garden Smash Burger",
+      "grams": 250,
+      "euros": 12,
+      "description": "Sample menu item.",
+      "poster": "assets/0.jpg",
+      "video": "",
+      "photos": [
+        "assets/0.jpg"
+      ],
+      "category": "Weed",
+      "id": "garden-smash-burger"
+    },
+    {
+      "name": "Hash Brown Burger",
+      "grams": 250,
+      "euros": 12,
+      "description": "Sample menu item.",
+      "poster": "assets/1.jpg",
+      "video": "",
+      "photos": [
+        "assets/1.jpg"
+      ],
+      "category": "Hash",
+      "id": "hash-brown-burger"
+    },
+    {
+      "name": "Pepper Glaze Dog",
+      "grams": 250,
+      "euros": 12,
+      "description": "Sample menu item.",
+      "poster": "assets/2.jpg",
+      "video": "",
+      "photos": [
+        "assets/2.jpg"
+      ],
+      "category": "Extract",
+      "id": "pepper-glaze-dog"
+    },
+    {
+      "name": "Classic American Dog",
+      "grams": 250,
+      "euros": 12,
+      "description": "Sample menu item.",
+      "poster": "assets/3.jpg",
+      "video": "",
+      "photos": [
+        "assets/3.jpg"
+      ],
+      "category": "USA",
+      "id": "classic-american-dog"
+    }
+  ],
+  "categories": [
+    "Weed",
+    "Hash",
+    "Extract",
+    "USA"
+  ],
+  "banner": "",
+  "avatar": "assets/rosa-nera.jpg",
+  "reviews": [],
+  "featured": [
+    "garden-smash-burger",
+    "hash-brown-burger",
+    "pepper-glaze-dog",
+    "classic-american-dog"
+  ],
+  "categoryImages": {
+    "Weed": "assets/0.jpg",
+    "Hash": "assets/1.jpg",
+    "Extract": "assets/2.jpg",
+    "USA": "assets/3.jpg"
+  },
+  "reviewBot": ""
+}
